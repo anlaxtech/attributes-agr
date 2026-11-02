@@ -1,0 +1,78 @@
+name: Release
+
+# Выпуск версии: git tag v1.3.0 && git push origin v1.3.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  windows:
+    name: Установщик плагина и программа обучения
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Версия из тега
+        shell: bash
+        run: echo "VER=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Плагин под Revit 2020–2026
+        shell: pwsh
+        run: |
+          foreach ($v in 2020..2026) {
+            dotnet build plugin/RevitAIClassifier/RevitAIClassifier.csproj -c Release -p:RevitVersion=$v -p:UseRevitNuGet=true
+            if ($LASTEXITCODE -ne 0) { throw "Revit $v не собрался" }
+          }
+
+      - name: Установщик (Inno Setup)
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVer=$env:VER" plugin\installer\RevitAIClassifier.iss
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Программа обучения (exe)
+        working-directory: python
+        run: |
+          pip install -r requirements.txt pyinstaller
+          python -m PyInstaller --noconfirm --onedir --windowed --name AtributyAGR_Trainer --collect-all ifcopenshell app.py
+          Copy-Item ..\rules\Правила_АГР.xlsx dist\AtributyAGR_Trainer\
+          Copy-Item ..\rules\classifiers\*.txt dist\AtributyAGR_Trainer\
+          Compress-Archive -Path dist\AtributyAGR_Trainer -DestinationPath ..\AtributyAGR_Trainer_$env:VER.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            plugin/installer/output/*.exe
+            AtributyAGR_Trainer_*.zip
+          generate_release_notes: true
+
+  docker:
+    name: Образ сервиса в GitHub Container Registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Имя владельца строчными (требование GHCR)
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: python
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER }}/atributy-agr-service:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER }}/atributy-agr-service:latest

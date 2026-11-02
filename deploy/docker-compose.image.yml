@@ -1,0 +1,20 @@
+# Сервис АтрибутыАГР из ГОТОВОГО образа (без сборки). Замените <владелец> на имя владельца репозитория на GitHub.
+# Запуск: docker compose -f docker-compose.image.yml up -d      Проверка: http://<сервер>:8765/health
+services:
+  atributy-agr:
+    image: ghcr.io/<владелец>/atributy-agr-service:latest
+    container_name: atributy-agr-service
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      AGR_HOST: 0.0.0.0
+      AGR_PORT: "8765"
+      AGR_RULES: /data/rules.xlsx
+      AGR_LABELS: /data/labels.xlsx
+      AGR_SPACE_LABELS: /data/labels_spaces.xlsx
+      AGR_RELOAD_SEC: "30"
+      AGR_MODE: hybrid
+      AGR_TOKEN: ""
+    volumes:
+      - ./data:/data

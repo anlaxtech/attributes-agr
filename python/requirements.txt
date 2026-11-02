@@ -1,0 +1,5 @@
+# Программа обучения и скрипты (на компьютере BIM-менеджера)
+-r requirements-service.txt
+ifcopenshell>=0.7
+pyarrow>=14
+pdfplumber>=0.10      # только для tools/mssk_pdf_to_txt.py

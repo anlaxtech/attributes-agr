@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>АтрибутыАГР</Name>
+    <Assembly>RevitAIClassifier\RevitAIClassifier.dll</Assembly>
+    <FullClassName>RevitAIClassifier.App</FullClassName>
+    <AddInId>6F1E2B7A-4C3D-4E8F-9A1B-2C3D4E5F6A7B</AddInId>
+    <VendorId>MERACOM</VendorId>
+    <VendorDescription>Мераком</VendorDescription>
+  </AddIn>
+</RevitAddIns>

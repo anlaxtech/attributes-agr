@@ -1,0 +1,3 @@
+-r python/requirements-service.txt
+pytest>=8
+httpx>=0.27

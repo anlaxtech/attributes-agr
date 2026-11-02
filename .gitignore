@@ -1,0 +1,37 @@
+# ── Данные компании и результаты обучения — НЕ публиковать ──
+*.ifc
+*.ifczip
+labels*.xlsx
+corrections*.csv
+pending_corrections.json
+compare_report*.xlsx
+control_report*.xlsx
+rules_report*.xlsx
+corrections_report*.xlsx
+errors_*.csv
+model.joblib
+cache/
+выгрузка/
+company_settings.json
+service_url.txt
+deploy/data/*
+!deploy/data/README.md
+
+# ── Python ──
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.spec
+.pytest_cache/
+
+# ── .NET / Visual Studio ──
+bin/
+obj/
+.vs/
+*.user
+
+# ── Установщик ──
+plugin/installer/output/

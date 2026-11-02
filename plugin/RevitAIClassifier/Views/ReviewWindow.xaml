@@ -1,0 +1,153 @@
+<Window x:Class="RevitAIClassifier.Views.ReviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="АтрибутыАГР — проверка параметров АГР" Width="1400" Height="760" MinWidth="980" MinHeight="420"
+        WindowStartupLocation="CenterOwner" Background="#F3F3F3" FontSize="13">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Вкладки = шаги схемы. Содержимое общее (одна таблица), вкладка меняет фильтр -->
+        <TabControl x:Name="StepTabs" SelectionChanged="StepTabs_SelectionChanged" Background="Transparent"
+                    BorderThickness="0" Padding="0"/>
+
+        <DockPanel Grid.Row="1" Margin="0,6,0,6">
+            <CheckBox x:Name="OnlyReview" Content="Только на проверку" VerticalAlignment="Center"
+                      Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+            <CheckBox x:Name="GroupSpaces" Content="Группировать: помещения по имени, модели в контексте по семейству" VerticalAlignment="Center"
+                      Margin="20,0,0,0" IsChecked="True" Checked="Group_Changed" Unchecked="Group_Changed"
+                      ToolTip="Помещения — по имени и назначению, модели в контексте — по имени семейства без номера. Правка применяется ко всей группе"/>
+            <TextBlock x:Name="SummaryText" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="#555"/>
+            <TextBlock x:Name="HintText" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#888"
+                       Text="Исправили значение на этом шаге — нажмите «Пересчитать следующие шаги»"/>
+        </DockPanel>
+
+        <DataGrid x:Name="CellsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False"
+                  CanUserDeleteRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="#E6E6E6" RowHeight="30" SelectionMode="Extended"
+                  BorderBrush="#BDBDBD" Background="White" EnableRowVirtualization="True">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="проверить">
+                            <Setter Property="Background" Value="#FCE5CD"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="проверено">
+                            <Setter Property="Background" Value="#D9EAD3"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="исключить">
+                            <Setter Property="Foreground" Value="#9E9E9E"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="" Width="52">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Click="Toggle_Click" Content="{Binding ToggleText}" Margin="1" Padding="2,0"
+                                    Background="Transparent" BorderBrush="#BDBDBD"
+                                    ToolTip="Раскрыть группу, чтобы поменять отдельные элементы / свернуть обратно">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ToggleText}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Статус" Width="110" SortMemberPath="Status">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedItem="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Margin="1">
+                                <ComboBox.ItemsSource>
+                                    <x:Array Type="{x:Type sys:String}">
+                                        <sys:String>ок</sys:String>
+                                        <sys:String>проверить</sys:String>
+                                        <sys:String>проверено</sys:String>
+                                        <sys:String>исключить</sys:String>
+                                    </x:Array>
+                                </ComboBox.ItemsSource>
+                            </ComboBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn x:Name="ParamColumn" Header="Параметр" Binding="{Binding ParamTitle}" Width="270"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="120" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Семейство" Binding="{Binding Family}" Width="180" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Тип / имя" Binding="{Binding TypeName}" Width="240" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Шт." Binding="{Binding Count}" Width="45" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Значение параметра" Width="170" SortMemberPath="Value">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Margin="1">
+                                <!-- код классификатора: окно выбора с поиском -->
+                                <Button Click="Code_Click" Padding="6,0" HorizontalContentAlignment="Stretch"
+                                        Background="White" BorderBrush="#BDBDBD" ToolTip="{Binding Name}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasClassifier}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="▾" Foreground="#777" Margin="6,0,0,0"/>
+                                        <TextBlock Text="{Binding Value}" FontFamily="Consolas"/>
+                                    </DockPanel>
+                                </Button>
+                                <!-- остальные параметры: варианты из таблицы правил или свой текст -->
+                                <ComboBox IsEditable="True" ItemsSource="{Binding Options}"
+                                          Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasClassifier}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.Style>
+                                </ComboBox>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="220" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Источник" Binding="{Binding Source}" Width="170" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Увер." Binding="{Binding Conf, StringFormat=0.00}" Width="50"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="Сейчас в модели" Binding="{Binding Current}" Width="130"
+                                    IsReadOnly="True"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DockPanel Grid.Row="3" Margin="0,10,0,0">
+            <Button Content="Пересчитать следующие шаги" Padding="16,6" Click="Recalc_Click"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Отчёт в Excel" Padding="16,6" Margin="6,0" Click="Report_Click"
+                        ToolTip="Что заполнено и что нет — по каждому элементу, с ID. До записи — план, после — результат"/>
+                <Button Content="Экспорт в CSV" Padding="16,6" Margin="6,0" Click="Export_Click"/>
+                <Button Content="Записать в Revit" Padding="16,6" Margin="6,0" FontWeight="SemiBold"
+                        Click="Write_Click"/>
+                <Button Content="Закрыть" Padding="16,6" Margin="6,0" IsCancel="True"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,9 @@
+* text=auto
+*.bat  text eol=crlf
+*.iss  text eol=crlf
+*.cs   text eol=crlf
+*.xaml text eol=crlf
+*.xlsx binary
+*.png  binary
+# классификаторы в UTF-16 — не трогать переводы строк
+rules/classifiers/*.txt binary

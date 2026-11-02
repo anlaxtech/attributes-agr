@@ -1,0 +1,126 @@
+<Window x:Class="RevitAIClassifier.Views.MappingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="АтрибутыАГР" Width="1050" Height="660" MinWidth="860" MinHeight="480"
+        WindowStartupLocation="CenterScreen" Background="#F3F3F3" FontSize="13">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Категории: галочка — заполнять ли категорию -->
+        <Border Grid.Column="0" Background="White" CornerRadius="4" Padding="12" Margin="0,0,12,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="КАТЕГОРИИ" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,4,0,12"/>
+                <ListBox x:Name="CategoryList" BorderBrush="#BDBDBD"
+                         SelectionChanged="CategoryList_SelectionChanged" HorizontalContentAlignment="Stretch">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="2,4">
+                                <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          VerticalAlignment="Center" Margin="0,0,8,0"
+                                          ToolTip="Заполнять эту категорию"/>
+                                <TextBlock Text="{Binding Key}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Маппинг: галочка — заполнять ли параметр; щелчок по параметру Revit — выбор с поиском -->
+        <Border Grid.Column="1" Background="White" CornerRadius="4" Padding="16">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="МАППИНГ ПАРАМЕТРОВ" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,4,0,12"/>
+                <TextBlock DockPanel.Dock="Bottom" Foreground="#6A6A6A" Margin="0,10,0,0" TextWrapping="Wrap"
+                           Text="Первая галочка — заполнять параметр, «Перезаписывать» — менять ли уже заполненные значения. ★ — наименование заполняется по коду автоматически. Щелчок по параметру Revit — выбор с поиском."/>
+                <DataGrid x:Name="MappingGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                          CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E6E6E6"
+                          AlternatingRowBackground="#F7F7F7" RowHeight="34" SelectionUnit="Cell"
+                          BorderBrush="#BDBDBD">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="" Width="34">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="" Binding="{Binding Marker}" Width="22" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Width="100">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="Перезаписывать" ToolTip="Снимите галочку — уже заполненные в модели значения останутся как есть"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Overwrite, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              ToolTip="Перезаписывать уже заполненные значения"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Имя параметра в IFC" Binding="{Binding IfcName}"
+                                            Width="*" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Margin" Value="6,0"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="Параметр Revit" Width="1.4*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Click="Param_Click" Margin="2,3" Padding="6,0" Background="White"
+                                            BorderBrush="#BDBDBD" HorizontalContentAlignment="Stretch">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right" Text="▾" Foreground="#777" Margin="6,0,0,0"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding KindText}" Foreground="#8A8A8A"
+                                                       Margin="6,0,0,0"/>
+                                            <TextBlock Text="{Binding Selected.Display}" TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <!-- Что заполнять -->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,12,0,0"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="Заполнять:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <RadioButton x:Name="ScopeDoc" Content="все элементы документа" VerticalAlignment="Center"
+                         Margin="0,0,14,0" Checked="Scope_Changed"/>
+            <RadioButton x:Name="ScopeView" Content="видимые на активном виде" VerticalAlignment="Center"
+                         Margin="0,0,30,0" Checked="Scope_Changed"/>
+            <TextBlock Text="Сервер:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox x:Name="ServiceUrlBox" Width="200" Margin="0,0,30,0" VerticalContentAlignment="Center"
+                     LostFocus="ServiceUrl_LostFocus" ToolTip="Адрес сервиса АтрибутыАГР, например http://server:8765"/>
+            <TextBlock Text="Тип фасада:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox x:Name="FacadeBox" Width="140" SelectionChanged="FacadeBox_SelectionChanged"
+                      ToolTip="Для правил «Тип фасада»: витраж / навесной фасад / обычный. Запоминается для этого файла"/>
+        </StackPanel>
+
+        <!-- Кнопки -->
+        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal"
+                    HorizontalAlignment="Center" Margin="0,12,0,0">
+            <Button Content="Импорт настроек" Padding="16,6" Margin="6,0" Click="Import_Click"/>
+            <Button Content="Экспорт настроек" Padding="16,6" Margin="6,0" Click="Export_Click"/>
+            <Button Content="Заполнить параметры" Padding="16,6" Margin="6,0" FontWeight="SemiBold"
+                    Click="Fill_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

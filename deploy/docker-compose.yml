@@ -1,0 +1,29 @@
+# Сервис АтрибутыАГР — один на компанию. Данные компании — в папке ./data рядом с этим файлом.
+# Запуск: docker compose up -d --build      Проверка: http://<сервер>:8765/health
+services:
+  atributy-agr:
+    build:
+      context: ../python
+      dockerfile: Dockerfile
+    image: atributy-agr-service:latest
+    container_name: atributy-agr-service
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      AGR_HOST: 0.0.0.0
+      AGR_PORT: "8765"
+      AGR_RULES: /data/rules.xlsx                  # таблица правил (Правила_АГР.xlsx)
+      AGR_LABELS: /data/labels.xlsx                # разметка элементов
+      AGR_SPACE_LABELS: /data/labels_spaces.xlsx   # разметка помещений и зон
+      AGR_RELOAD_SEC: "30"                         # раз в 30 с проверять, не обновились ли таблицы
+      AGR_MODE: hybrid                             # hybrid | rules (только правила) | model (только модель)
+      AGR_TOKEN: ""                                # задайте, если сервис доступен не только из своей сети
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

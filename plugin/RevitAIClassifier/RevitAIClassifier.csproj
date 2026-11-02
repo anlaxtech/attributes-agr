@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Один проект — сборки для Revit 2020–2026. Версия задаётся свойством RevitVersion (по умолчанию 2022):
+      dotnet build -c Release -p:RevitVersion=2025
+    Revit 2020 — .NET Framework 4.7, 2021–2024 — 4.8, 2025–2026 — .NET 8.
+    RevitAPI.dll берётся из установленного Revit, а если этой версии Revit на компьютере нет — из NuGet
+    (пакеты Nice3point.Revit.Api.*). Результат: bin\Release\R2025\RevitAIClassifier.dll и т.д.
+    Собрать все версии сразу: build_all.bat рядом с проектом.
+  -->
+  <PropertyGroup>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2022</RevitVersion>
+    <RevitDir Condition="'$(RevitDir)' == ''">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitDir>
+    <UseRevitNuGet Condition="'$(UseRevitNuGet)' == '' And !Exists('$(RevitDir)\RevitAPI.dll')">true</UseRevitNuGet>
+
+    <TargetFramework Condition="'$(RevitVersion)' == '2020'">net47</TargetFramework>
+    <TargetFramework Condition="'$(RevitVersion)' &gt;= '2021' And '$(RevitVersion)' &lt;= '2024'">net48</TargetFramework>
+    <TargetFramework Condition="'$(RevitVersion)' &gt;= '2025'">net8.0-windows</TargetFramework>
+
+    <UseWPF>true</UseWPF>
+    <OutputType>Library</OutputType>
+    <RootNamespace>RevitAIClassifier</RootNamespace>
+    <AssemblyName>RevitAIClassifier</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\$(Configuration)\R$(RevitVersion)\</OutputPath>
+    <!-- WebClient устарел в .NET 8, но работает и проще для совместимости со всеми версиями -->
+    <NoWarn>$(NoWarn);SYSLIB0014;CS0618</NoWarn>
+    <DefineConstants>$(DefineConstants);REVIT$(RevitVersion)</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2021'">$(DefineConstants);REVIT2021_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2022'">$(DefineConstants);REVIT2022_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2023'">$(DefineConstants);REVIT2023_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2024'">$(DefineConstants);REVIT2024_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2025'">$(DefineConstants);REVIT2025_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="'$(RevitVersion)' &gt;= '2026'">$(DefineConstants);REVIT2026_OR_GREATER</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Revit API: из установленного Revit… -->
+  <ItemGroup Condition="'$(UseRevitNuGet)' != 'true'">
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitDir)\RevitAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitDir)\RevitAPIUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <!-- …или из NuGet (нужен только для сборки, в установку не попадает) -->
+  <ItemGroup Condition="'$(UseRevitNuGet)' == 'true'">
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- .NET Framework (Revit 2020–2024) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net47' Or '$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Иконки кнопки на ленте: встраиваются в dll -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\icon32.png" LogicalName="RevitAIClassifier.icon32.png" />
+    <EmbeddedResource Include="Resources\icon16.png" LogicalName="RevitAIClassifier.icon16.png" />
+  </ItemGroup>
+
+  <!-- После сборки (на своём компьютере, не на CI): в папку надстроек нужной версии Revit -->
+  <Target Name="CopyToRevitAddins" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' And '$(CI)' != 'true' And Exists('$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)')">
+    <PropertyGroup>
+      <AddinsDir>$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)</AddinsDir>
+    </PropertyGroup>
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).dll" DestinationFolder="$(AddinsDir)\RevitAIClassifier" />
+    <Copy SourceFiles="$(ProjectDir)RevitAIClassifier.addin" DestinationFolder="$(AddinsDir)" />
+  </Target>
+</Project>

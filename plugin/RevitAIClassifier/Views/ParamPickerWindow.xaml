@@ -1,0 +1,40 @@
+<Window x:Class="RevitAIClassifier.Views.ParamPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Выбор параметра Revit" Width="520" Height="560" MinWidth="360" MinHeight="300"
+        WindowStartupLocation="Manual" WindowStyle="ToolWindow" ShowInTaskbar="False"
+        Background="#F3F3F3" FontSize="13">
+    <DockPanel Margin="10">
+        <TextBlock DockPanel.Dock="Top" x:Name="TargetText" Foreground="#555" Margin="2,0,0,6"
+                   TextTrimming="CharacterEllipsis"/>
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+            <TextBox x:Name="SearchBox" Padding="6,4" TextChanged="SearchBox_TextChanged"
+                     PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+            <TextBlock x:Name="Placeholder" Text="Поиск по имени параметра"
+                       Foreground="#9E9E9E" Margin="9,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+        </Grid>
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="AllKinds" Content="все" IsChecked="True" Margin="0,0,10,0" Checked="Kind_Changed"/>
+                <RadioButton x:Name="TypeOnly" Content="типа" Margin="0,0,10,0" Checked="Kind_Changed"/>
+                <RadioButton x:Name="InstOnly" Content="экземпляра" Checked="Kind_Changed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Выбрать" Padding="16,4" Margin="6,0" IsDefault="True" Click="Ok_Click"/>
+                <Button Content="Отмена" Padding="16,4" IsCancel="True"/>
+            </StackPanel>
+        </DockPanel>
+        <ListBox x:Name="Results" DisplayMemberPath="Display" MouseDoubleClick="Results_MouseDoubleClick"
+                 PreviewKeyDown="Results_PreviewKeyDown" VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+            <ListBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="#6A6A6A" Margin="4,6,0,2"/>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListBox.GroupStyle>
+        </ListBox>
+    </DockPanel>
+</Window>
