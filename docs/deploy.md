@@ -1,11 +1,17 @@
 # Сервис на сервере (Docker)
 
-## Установка из готового образа (проще)
+## Установка из готового образа
+
+Чтобы скачать закрытый образ `ghcr.io/anlaxtech/atributy-agr-service:latest`, войдите командой
+`docker login ghcr.io` под учётной записью с доступом к пакету. Для входа используйте
+[токен GitHub (classic) с правом `read:packages`](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
+Если доступа к пакету нет, [соберите сервис из исходников](#установка-из-исходников).
 
 ```bash
-mkdir atributy-agr && cd atributy-agr && mkdir data
-# скачайте deploy/docker-compose.image.yml из репозитория, замените <владелец>
-# положите в data: rules.xlsx (таблица правил из релиза), labels.xlsx, labels_spaces.xlsx
+mkdir attributes-agr && cd attributes-agr && mkdir data
+# скачайте deploy/docker-compose.image.yml из репозитория в текущую папку
+# скопируйте rules/Правила_АГР.xlsx в data/rules.xlsx
+# разметку labels.xlsx и labels_spaces.xlsx можно добавить позже
 docker compose -f docker-compose.image.yml up -d
 ```
 
@@ -14,8 +20,8 @@ docker compose -f docker-compose.image.yml up -d
 ## Установка из исходников
 
 ```bash
-git clone https://github.com/<владелец>/atributy-agr.git
-cd atributy-agr/deploy
+git clone https://github.com/anlaxtech/attributes-agr.git
+cd attributes-agr/deploy
 mkdir -p data
 cp ../rules/Правила_АГР.xlsx data/rules.xlsx
 # + data/labels.xlsx и data/labels_spaces.xlsx из программы обучения (можно позже)
@@ -41,7 +47,7 @@ netsh advfirewall firewall add rule name="AtributyAGR 8765" dir=in action=allow 
 | `AGR_SPACE_LABELS` | `/data/labels_spaces.xlsx` | разметка помещений и зон |
 | `AGR_RELOAD_SEC` | `30` | как часто проверять изменения таблиц (0 — не проверять) |
 | `AGR_MODE` | `hybrid` | `rules` — только правила, `model` — только модель |
-| `AGR_TOKEN` | пусто | если задан — запросы без `X-AGR-Token` отклоняются |
+| `AGR_TOKEN` | пусто | при пустом значении проверка выключена. Если токен задан, каждый запрос, кроме `/health`, требует совпадающий `X-AGR-Token` |
 
 ## Обновление данных и кода
 
@@ -52,9 +58,6 @@ netsh advfirewall firewall add rule name="AtributyAGR 8765" dir=in action=allow 
 
 Если таблица битая или была открыта в Excel при копировании, сервис продолжит работать на прежней
 версии, а ошибка будет в `/health` → `last_error`.
-
-Готовый образ из релизов: `ghcr.io/<владелец>/atributy-agr-service:latest` — можно указать его в
-`image:` вместо `build:`.
 
 ## Полезное
 

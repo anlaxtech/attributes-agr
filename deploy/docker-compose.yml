@@ -18,7 +18,7 @@ services:
       AGR_SPACE_LABELS: /data/labels_spaces.xlsx   # разметка помещений и зон
       AGR_RELOAD_SEC: "30"                         # раз в 30 с проверять, не обновились ли таблицы
       AGR_MODE: hybrid                             # hybrid | rules (только правила) | model (только модель)
-      AGR_TOKEN: ""                                # задайте, если сервис доступен не только из своей сети
+      AGR_TOKEN: ""                                # пустое значение отключает проверку токена
     volumes:
       - ./data:/data
     healthcheck:

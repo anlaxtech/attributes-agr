@@ -1,8 +1,8 @@
-# Сервис АтрибутыАГР из ГОТОВОГО образа (без сборки). Замените <владелец> на имя владельца репозитория на GitHub.
+# Сервис АтрибутыАГР из готового образа в GitHub Container Registry.
 # Запуск: docker compose -f docker-compose.image.yml up -d      Проверка: http://<сервер>:8765/health
 services:
   atributy-agr:
-    image: ghcr.io/<владелец>/atributy-agr-service:latest
+    image: ghcr.io/anlaxtech/atributy-agr-service:latest
     container_name: atributy-agr-service
     restart: unless-stopped
     ports:
